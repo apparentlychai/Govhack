@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "govhack"
+version = "0.1.0"
+description = ""
+authors = ["Ramee El <5517421+raels0@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+streamlit = "^1.12.0"
+pyarrow = "^9.0.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
