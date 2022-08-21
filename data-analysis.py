@@ -7,7 +7,7 @@ DATA_PATH = "E:/Learning/Self-Driven/Programming/Hackathon/2022-GovHack/Govhack/
 # DATA_FILE = "NTGovt_ED_presentation_rate_per_capita_2018-19.csv"
 
 # There are two functions here, there should only be one. I hate this, but it works...
-def get_chart_bar(data,x, y, x_label, y_label, title, stack = False):
+def get_chart_bar(data,x, y, x_label, y_label, title, stack = False, y_domain = [0,1]):
     hover = alt.selection_single(
         fields=[x],
         nearest=True,
@@ -23,6 +23,7 @@ def get_chart_bar(data,x, y, x_label, y_label, title, stack = False):
                 x=alt.X(x, title=x_label),
                 y=alt.Y(y, title=y_label),
                 color="state",
+                # column="state"
             )
         )
     else:
@@ -31,7 +32,7 @@ def get_chart_bar(data,x, y, x_label, y_label, title, stack = False):
             .mark_bar()
             .encode(
                 x=alt.X(x, title=x_label),
-                y=alt.Y(y, title=y_label),
+                y=alt.Y(y, title=y_label, scale=alt.Scale(domain=y_domain)),
                 # color="state",
             )
         )   
@@ -101,27 +102,28 @@ def get_chart_line(data,x, y, x_label, y_label, title, hline = 0):
         return (lines + points + tooltips).interactive()
 
 
-def filter_key_states(data, pc_measure, n_measure, key_state):
-    # First get the states with min/max values
-    state_total = data.groupby(['state'], as_index=False).sum()
-    state_total[pc_measure] = state_total[n_measure]/state_total['n_patients'] *100
+def filter_key_states(data, pc_measure, n_measure, keep_states):
+    # # OLD method of getting min/max states
+    # state_total = data.groupby(['state'], as_index=False).sum()
+    # state_total[pc_measure] = state_total[n_measure]/state_total['n_patients'] *100
 
-    state_column_id = state_total.columns.get_loc("state") # Col ID of the state variable
+    state_column_id = data.columns.get_loc("state") # Col ID of the state variable
 
-    # String of min/max states
-    max_state = state_total.iloc[state_total[pc_measure].idxmax(), state_column_id]
-    min_state = state_total.iloc[state_total[pc_measure].idxmin(), state_column_id]
+    # # String of min/max states
+    # max_state = state_total.iloc[state_total[pc_measure].idxmax(), state_column_id]
+    # min_state = state_total.iloc[state_total[pc_measure].idxmin(), state_column_id]
 
     # Make sure we include the key state too
-    keep_states = [max_state, min_state, key_state]
+    # keep_states = [max_state, min_state, key_state]
     state_total = data.query('state == @keep_states')
 
     # Then we get the national tot
     aus_total = data.groupby(['time_period'], as_index=False).sum()
     aus_total[pc_measure] = aus_total[n_measure]/aus_total['n_patients'] *100
-    aus_total.insert(state_column_id + 1, 'state', 'Australia') # +1 accounts for the group_by dropping a col
+    aus_total.insert(state_column_id, 'state', 'Australia') # +1 accounts for the group_by dropping a col
 
     return pd.concat([state_total, aus_total])
+
 
 st.title("Data Analysis")
 
@@ -133,9 +135,38 @@ st.title("Data Analysis")
 # The Northern Territory is an important case study, since the ED presentation rate is **TWICE** those of other states, as seen below.
 # """)
 
-### Part 1 : ED Presentation Per Capita
+### Part 1 : ED Presentation by Triage by Arrival Method
 st.markdown("""
-## 1. Hospital ED Presentation Rate Per Capita
+## 1. Proportion of Ambulance Transported Patient by Triage Method
+""")
+
+# Read data
+arrival_method = pd.read_csv(f'{DATA_PATH}/AIHW_ED_triage_by_arrival.csv')
+ambulance = arrival_method.query('Arrival_mode == "Ambulance, air ambulance or helicopter rescue service"')
+
+
+cohort_choice_ambulance = st.selectbox(
+     "Which patient cohort/triage group are you interested in?",
+     ('Resuscitation', 'Emergency', 'Urgent', 'Semi-urgent', 'Non-urgent'),
+     key = "ambulance")
+
+ambulance = ambulance.query('Triage_category == @cohort_choice_ambulance')
+ambulance.rename(columns={'State':'state'}, inplace=True)
+
+# Plot and output chart
+ambulance_chart = get_chart_bar(ambulance, 
+    "state", "proptotal", 'State', 'Percentage in Patient Cohort',
+    "Of Patients Arriving by Ambulance, Percentage by Patient Cohort",
+    y_domain=[0,100])
+
+st.altair_chart(
+    ambulance_chart.interactive(),
+    use_container_width=True
+)
+
+### Part 2 : ED Presentation Per Capita
+st.markdown("""
+## 2. Hospital ED Presentation Rate Per Capita
 The hospital ED presentation rate in NT is **TWICE** that of any other state, highlighting the overcrowding issue.
 """)
 # Read Data
@@ -147,16 +178,17 @@ per_capita = per_capita.query('time_period == "2018-19" & state != "Total"')
 # Plot and output chart
 per_capita_chart = get_chart_bar(per_capita, 
     "state", "pres_per_1000", 'State', 'Presentation Per 1000 People',
-    "Hospital ED Presentations (2018-19) Per 1000 People")
+    "Hospital ED Presentations (2018-19) Per 1000 People",
+    y_domain=[0,800])
 st.altair_chart(
     per_capita_chart.interactive(),
     use_container_width=True
 )
 st.write("Source: Northern Territory Government -- [Emergency Department Care 2018-19](https://data.nt.gov.au/dataset/emergency-department-care-2018-19)")
 
-### Part 2 : ED Presentation On Time Rate
+### Part 3 : ED Presentation On Time Rate
 st.markdown("""
-## 2. Ontime Hospital ED Treatment Commencement
+## 3. Ontime Hospital ED Treatment Commencement
 According to the [Australasian College for Emergency Medicine](https://acem.org.au/Content-Sources/Advancing-Emergency-Medicine/Better-Outcomes-for-Patients/Triage) 
 the maximium waiting time should be as follows, with performance threshold indicators.
 | Patient Cohort/Triage | Max Waiting Time (min)| Performance Indicator Threshold | 
@@ -186,17 +218,23 @@ perf_indicator = {
 }
 
 # Fetch user request
-cohort_choice = st.radio(
+cohort_choice_ontime = st.selectbox(
      "Which patient cohort/triage group are you interested in?",
      ('All', 'Resuscitation', 'Emergency', 'Urgent', 'Semi-Urgent', 'Non-Urgent'))
 
+state_choice_ontime = st.multiselect(
+     "Which states are you interested in?",
+     ['Australia', 'ACT', 'NSW', 'NT', 'Qld', 'SA', 'Tas','Vic', 'WA'],
+     key = "ontime")
+
+# print(state_choice)
 # Clean/filter data according to request
-if cohort_choice == 'All':
+if cohort_choice_ontime == 'All':
     ontime = ontime
 else:
-    ontime = ontime.query('patient_cohort == @cohort_choice')
+    ontime = ontime.query('patient_cohort == @cohort_choice_ontime')
 
-ontime = filter_key_states(ontime, 'pc_ontime', 'n_ontime', "NT")
+ontime = filter_key_states(ontime, 'pc_ontime', 'n_ontime', state_choice_ontime)
 
 ontime = ontime.groupby(['state', 'time_period'], as_index=False).sum()
 ontime['pc_ontime'] = ontime['n_ontime']/ontime['n_patients'] *100
@@ -205,7 +243,7 @@ ontime['pc_ontime'] = ontime['n_ontime']/ontime['n_patients'] *100
 ontime_chart = get_chart_line(ontime, 
     "time_period", "pc_ontime", 'Time Period', '% On Time',
     "Percentage of On-Time Hospital ED Treatment Commencement",
-    hline=perf_indicator[cohort_choice])
+    hline=perf_indicator[cohort_choice_ontime])
 
 st.altair_chart(
     ontime_chart.interactive(),
@@ -215,9 +253,9 @@ st.write("Source: Australian Institute of Health and Welfare -- "
 "[Emergency Department Care Activity](https://www.aihw.gov.au/reports-data/myhospitals/sectors/emergency-department-care)")
 
 
-### Part 3 : ED Presentation Departure Within 4hr Rate
+### Part 4 : ED Presentation Departure Within 4hr Rate
 st.markdown("""
-## 3. Proportion of patients departing from ED within 4hrs
+## 4. Proportion of patients departing from ED within 4hrs
 This is a little more convoluted since 'depart' could mean admission or discharge. Either way, Northern Territory falls below the national average.
 
 NOTE: Only states with maximum and minimum values, along with Northern Territory and the National Average for clarity. Where there are only three lines, Northern Territory is the minimum.
@@ -231,14 +269,19 @@ within4hr = pd.read_csv(f'{DATA_PATH}/AIHW_ED_within4hr_presentation_rate_by_sta
 #      "Which patient cohort are you interested in?",
 #      ('All patients', 'Resuscitation', 'Emergency', 'Urgent', 'Semi-Urgent', 
 #      'Non-Urgent', 'Subsequently admitted patients', 'Not subsequently admitted patients'))
-cohort_choice = st.radio(
+cohort_choice_within4hr = st.selectbox(
      "Which patient cohort/triage group are you interested in?",
      ('All patients', 'Resuscitation', 'Emergency', 'Urgent', 'Semi-Urgent', 
      'Non-Urgent'))
 
-within4hr = within4hr.query('patient_cohort == @cohort_choice')
+state_choice_within4hr = st.multiselect(
+     "Which states are you interested in?",
+     ['Australia', 'ACT', 'NSW', 'NT', 'Qld', 'SA', 'Tas','Vic', 'WA'],
+     key = "within4hr")
 
-within4hr = filter_key_states(within4hr, 'pc_within4hr', 'n_within4hr', "NT")
+within4hr = within4hr.query('patient_cohort == @cohort_choice_within4hr')
+
+within4hr = filter_key_states(within4hr, 'pc_within4hr', 'n_within4hr', state_choice_within4hr)
 
 within4hr = within4hr.groupby(['state', 'time_period'], as_index=False).sum()
 within4hr['pc_within4hr'] = within4hr['n_within4hr']/within4hr['n_patients'] *100
@@ -254,10 +297,10 @@ st.altair_chart(
 st.write("Source: Australian Institute of Health and Welfare -- "
 "[Emergency Department Care Activity](https://www.aihw.gov.au/reports-data/myhospitals/sectors/emergency-department-care)")
 
-#### Part 4: Median Wait Time
+#### Part 5: Median Wait Time
 # Data sourced from https://www.aihw.gov.au/reports-data/myhospitals/hospital/h0737 (under wait time 2020-21)
 st.markdown("""
-## 4. Median Waittime in the ED
+## 5. Median Waittime in the ED
 On average Northern Territory has longer wait time than the national average.
 """)
 
@@ -276,4 +319,3 @@ st.altair_chart(
 st.write("Source: Australian Institute of Health and Welfare -- "
 "[Waiting time for Emergency Presentation by Triage Category by State for 2020-21](https://www.aihw.gov.au/reports-data/myhospitals/hospital/h0737) "
 "Under 'Waiting time in emergency departments' tab.")
-
