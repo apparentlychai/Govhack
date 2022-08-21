@@ -320,3 +320,13 @@ st.altair_chart(
 st.write("Source: Australian Institute of Health and Welfare -- "
 "[Waiting time for Emergency Presentation by Triage Category by State for 2020-21](https://www.aihw.gov.au/reports-data/myhospitals/hospital/h0737) "
 "Under 'Waiting time in emergency departments' tab.")
+
+#### Part 6: Mental health
+st.markdown("""
+## 6. Prevelance of Mental Health Issues in Australia
+
+According to the 2021 Census, approximately 2.2 million Australians deal with long term mental health issues. That's almost 10\% of the population!
+
+""")
+st.write("Source: Australian Bureau of Statistics -- "
+"[2021 Census](https://www.abs.gov.au/media-centre/media-releases/2021-census-data-over-8-million-australians-have-long-term-health-condition)")
