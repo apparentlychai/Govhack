@@ -139,6 +139,9 @@ st.title("Data Analysis")
 ### Part 1 : ED Presentation by Triage by Arrival Method
 st.markdown("""
 ## 1. Proportion of Ambulance Transported Patient by Triage Method
+
+Ambulances are admitting very few non urgent patients, across all states and territories.
+Worth noting in NT, 1.6\% of patients admitted by ambulances are of the non-urgent category, in contrast to the lowest in ACT of 0.85\%.
 """)
 
 # Read data
@@ -164,6 +167,8 @@ st.altair_chart(
     ambulance_chart.interactive(),
     use_container_width=True
 )
+
+st.write("Source: Northern Territory Government -- [Emergency Department Care 2018-19](https://data.nt.gov.au/dataset/emergency-department-care-2018-19)")
 
 ### Part 2 : ED Presentation Per Capita
 st.markdown("""
@@ -203,8 +208,6 @@ the maximium waiting time should be as follows, with performance threshold indic
 Northern Territory falls below the national average in all categories, with the possible exception of Non-Urgent patient cohorts.
 
 Northern Territory falls below the performance indicator threshold (indicated by the red dotted line) for all categories except for Non-Urgent.
-
-NOTE: Only states with maximum and minimum values, along with Northern Territory and the National Average for clarity. Where there are only three lines, Northern Territory is the minimum.
 """)
 
 # Read Data
@@ -257,9 +260,6 @@ st.write("Source: Australian Institute of Health and Welfare -- "
 ### Part 4 : ED Presentation Departure Within 4hr Rate
 st.markdown("""
 ## 4. Proportion of patients departing from ED within 4hrs
-This is a little more convoluted since 'depart' could mean admission or discharge. Either way, Northern Territory falls below the national average.
-
-NOTE: Only states with maximum and minimum values, along with Northern Territory and the National Average for clarity. Where there are only three lines, Northern Territory is the minimum.
 """)
 
 # Read data
