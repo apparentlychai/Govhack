@@ -5,11 +5,19 @@ description = ""
 authors = ["Ramee El <5517421+raels0@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9,!=1.2.3"
 streamlit = "^1.12.0"
 pyarrow = "^9.0.0"
+pandas = "^1.4.3"
+requests = "^2.28.1"
+beautifulsoup4 = "^4.11.1"
+geopy = "^2.2.0"
+python-dotenv = "^0.20.0"
+plotly = "^5.10.0"
+altair = "^4.2.0"
 
 [tool.poetry.dev-dependencies]
+black = {version = "^22.6.0", allow-prereleases = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
