@@ -42,8 +42,8 @@ def get_ED_times(page,geolocator,user_location):
     return user_lat_lon, EDtable_df, lat_lon_df
     
 
-def travel_time(user_lat_lon, EDtable_df, lat_lon_df):
-    mode_of_trans = st.radio("What is prefered travel option?",['Cycling','Driving','Walking'])
+def travel_time(user_lat_lon, EDtable_df, lat_lon_df,mode_of_trans):
+   
     #st.write(lat_lon_df)
     duration_to_destination = []
     for count,hospital in enumerate(EDtable_df['Hospital']):
@@ -54,12 +54,21 @@ def travel_time(user_lat_lon, EDtable_df, lat_lon_df):
             map_data = r.json()
 
             duration_to_destination.append((map_data['routes'][0]['duration'])/60)
-    EDtable_df['Duration to destination (minutes)'] = duration_to_destination
+    EDtable_df['Duration (minutes)'] = duration_to_destination
+    
     EDtable_df.set_index('Hospital', inplace=True)
-    #st.write([EDtable_df.columns[0], EDtable_df.columns[-1]])
-    EDtable_df = EDtable_df.sort_values(by = [EDtable_df.columns[0], EDtable_df.columns[-1]], ascending = [True, True], na_position = 'first')
-    st.write(EDtable_df.dropna())
-    #sorted_indices = (EDtable_df[EDtable_df.columns[0]] , EDtable_df['Duration to destination (minutes)']).sort_values().index
+    EDtable_df.rename(columns={EDtable_df.columns[0]:'Wait Time',EDtable_df.columns[1]:'Patients waiting',EDtable_df.columns[2]:'Total patient in ED'}, inplace=True)
+
+    EDtable_df = EDtable_df.dropna()
+    
+    EDtable_df[EDtable_df.columns[0]] = pd.to_numeric(EDtable_df[EDtable_df.columns[0]])
+
+    EDtable_df['sum_time'] = EDtable_df[EDtable_df.columns[0]] + EDtable_df[EDtable_df.columns[-1]]
+    
+    st.header('Earliest available ED')
+    st.dataframe(EDtable_df.sort_values(by = ['sum_time'], ascending = [True]).iloc[0:3:,0:5], width=5500)
+
+    return EDtable_df.sort_values(by = ['sum_time'], ascending = [True]).iloc[3:,0:5]
 
 
 def get_page_Parsed(page):
@@ -71,7 +80,30 @@ def get_User_lan_lon(user_location,geolocator):
     user_lat_lon = (user_location_geocode.latitude, user_location_geocode.longitude)
     return user_lat_lon
 
+def get_loc_time(map_data,EDtable_df,user_lat_lon,mode_of_trans,typeofloc):
+    loc_df = pd.DataFrame(columns=['Name','Address','Duration (minutes)'])
+
+    for i,data in enumerate( map_data['features']):
+        
+        loc_duration_request = requests.get(f"https://api.mapbox.com/directions/v5/mapbox/{str(mode_of_trans).lower()}/{user_lat_lon[1]},{user_lat_lon[0]};{data['geometry']['coordinates'][0]},{data['geometry']['coordinates'][1]}?access_token={environ['API_TOKEN']}")
+        time_to_loc = (loc_duration_request.json()['routes'][0]['duration'])/60
+        temp_dict = {'Name':data['text'], 'Address':data['place_name'].split(',')[1:2],'Duration (minutes)':time_to_loc}
+        loc_df = loc_df.append(temp_dict,ignore_index=True)
+
+    
+    st.header(f'Nearest {typeofloc}')
+    st.write(loc_df.sort_values(by = ['Duration (minutes)'], ascending = [True]))
+    
+    return loc_df.sort_values(by = ['Duration (minutes)'], ascending = [True])
+
+
+
+
+    #st.write(map_data)
+
+
 def get_ED_time_df(soup):
+
     Edtable = soup.find('table', attrs={'class':'rg-table zebra'})
     header = []
     for i in Edtable.find_all('th'):
