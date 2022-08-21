@@ -1,0 +1,90 @@
+---
+title: "Untitled"
+output: html_document
+date: "2022-08-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 0.0 packages
+
+```{r}
+library(readxl)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+```
+
+# 1.0 Inputs
+```{r}
+indir <- '/Users/matt/Documents/Coding projects/pyhackthon/Govhack/'
+
+excname <- 'Emergency-department-care-2018-19.xlsx'
+
+fpath <- paste0(indir, excname)
+
+```
+
+# 1.1 act on inputs
+
+```{r}
+# read in data
+sheetlist <- excel_sheets(fpath)
+fig4.2 <- read_excel(fpath, sheet="Table 4.2")
+
+#subset and change column names basics
+title.4.2 <- colnames(fig4.2)[1]
+colnames(fig4.2) <- fig4.2[1,]
+fig4.2 <- fig4.2[2:31,]
+fig4.2
+```
+```{r}
+fig4.2$nacounts <- rowSums(is.na(fig4.2))
+#Separate subheaders and datacols
+subheaders <- fig4.2[fig4.2$nacounts==ncol(fig4.2)-2,][1]
+fig4.2 <- fig4.2[fig4.2$nacounts!=ncol(fig4.2)-2,]
+fig4.2$nacounts <- NULL
+fig4.2$Total<- NULL
+
+#copy subheaders based on repeats in datacols
+nuniqitems <- setDT(fig4.2)[,.(counts =.N),by=c('Triage category and arrival mode')]
+nuniqitems2 <- rep(subheaders$`Triage category and arrival mode`, each=min(nuniqitems$counts))
+
+fig4.2 <- cbind(fig4.2, nuniqitems2)
+
+#remove total rows and change names
+fig4.2 <- setnames(fig4.2, c('Triage category and arrival mode', 'nuniqitems2'), c('Arrival_mode', 'Triage_category'))
+fig4.2 <- fig4.2[fig4.2$Arrival_mode != 'Total']
+
+#Now format is basically fixed
+```
+# 1.2 more data manipulation
+
+```{r}
+fig4.2 <- melt(fig4.2, id.vars = c('Arrival_mode', 'Triage_category'), 
+               measure.vars = colnames(fig4.2)[2:9], 
+               variable.name = 'State', 
+               value.name='presentations')
+fig4.2$presentations <- as.numeric(fig4.2$presentations)
+fig4.2
+```
+
+# 2.0 Do some plots
+
+## 2.1 Proportion of visits made by ambulance, that were non urgent
+
+```{r}
+fig4.2.plot1 <- fig4.2 %>% group_by(Arrival_mode, State) %>% mutate(totbyarrival=sum(presentations)) %>%
+                mutate(proptotal=(presentations/totbyarrival)*100) %>% filter(Arrival_mode=='Ambulance, air ambulance or helicopter rescue service')
+fig4.2.plot1
+
+fig4.2.plot1 %>% ggplot(aes(x=State, y=proptotal, fill=Triage_category)) + geom_bar(stat="identity") +
+  labs(title='% of Ambulance visits grouped by triage category and state', 
+       caption='Emergency department care 18-19 tbl 4.2',
+       ylab='Proportion of total ambulance visits',
+       xlab='State')
+```
+
+
