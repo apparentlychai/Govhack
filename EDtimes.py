@@ -39,6 +39,8 @@ def get_ED_times(page,geolocator,user_location):
     lat_lon_df = pd.DataFrame(dict_lat_lon,columns = ['lat','lon'])
     EDtable_df['Distance from user'] = distance_from_user
    # st.write(EDtable_df)
+    
+
     return user_lat_lon, EDtable_df, lat_lon_df
     
 
@@ -63,12 +65,23 @@ def travel_time(user_lat_lon, EDtable_df, lat_lon_df,mode_of_trans):
     
     EDtable_df[EDtable_df.columns[0]] = pd.to_numeric(EDtable_df[EDtable_df.columns[0]])
 
-    EDtable_df['sum_time'] = EDtable_df[EDtable_df.columns[0]] + EDtable_df[EDtable_df.columns[-1]]
+    EDtable_df['sum_time'] = EDtable_df[EDtable_df.columns[0]] + EDtable_df[EDtable_df.columns[-2]]
     
-    st.header('Earliest available ED')
-    st.dataframe(EDtable_df.sort_values(by = ['sum_time'], ascending = [True]).iloc[0:3:,0:5], width=5500)
+    EDtable_df = EDtable_df.sort_values(by = ['sum_time'], ascending = [True])
 
-    return EDtable_df.sort_values(by = ['sum_time'], ascending = [True]).iloc[3:,0:5]
+    # Added units for display
+    
+    EDtable_df['Duration (minutes)'] = pd.to_datetime(EDtable_df['Duration (minutes)'],unit='m').apply(lambda x: x.strftime("%H hr  %M min") if x.hour>0 else x.strftime("%M min") )
+    EDtable_df['Wait Time'] = pd.to_datetime(EDtable_df['Wait Time'],unit='m').apply(lambda x: x.strftime("%H hr  %M min") if x.hour>0 else x.strftime("%M min") )
+    EDtable_df['Distance from user'] =  EDtable_df['Distance from user'].round(decimals=2).map('{:,.2f} km'.format)
+
+
+    #.iloc[0:3,[0,1,2,3,5]]
+    st.header('Earliest available ED')
+    st.table(EDtable_df.iloc[0:3,0:5])
+    
+    #.sort_values(by = ['sum_time'], ascending = [True]).iloc[3:,0:5]
+    return EDtable_df
 
 
 def get_page_Parsed(page):
@@ -81,22 +94,34 @@ def get_User_lan_lon(user_location,geolocator):
     return user_lat_lon
 
 def get_loc_time(map_data,EDtable_df,user_lat_lon,mode_of_trans,typeofloc):
+   # not_includede_lst = ['radiology','maternity'] # Need to fix this
     loc_df = pd.DataFrame(columns=['Name','Address','Duration (minutes)'])
 
     for i,data in enumerate( map_data['features']):
         
-        loc_duration_request = requests.get(f"https://api.mapbox.com/directions/v5/mapbox/{str(mode_of_trans).lower()}/{user_lat_lon[1]},{user_lat_lon[0]};{data['geometry']['coordinates'][0]},{data['geometry']['coordinates'][1]}?access_token={environ['API_TOKEN']}")
-        time_to_loc = (loc_duration_request.json()['routes'][0]['duration'])/60
-        temp_dict = {'Name':data['text'], 'Address':data['place_name'].split(',')[1:2],'Duration (minutes)':time_to_loc}
-        loc_df = loc_df.append(temp_dict,ignore_index=True)
+        if typeofloc == 'Medical Centre':
+            if  'radiology' not in data['text'].lower(): 
+                loc_df = get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data)
+        else:
+            loc_df = get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data)
+
 
     
     st.header(f'Nearest {typeofloc}')
-    st.write(loc_df.sort_values(by = ['Duration (minutes)'], ascending = [True]))
-    
+    loc_df_sorted = loc_df.sort_values(by = ['Duration (minutes)'], ascending = [True])
+    loc_df_sorted['Duration (minutes)'] = pd.to_datetime(loc_df_sorted['Duration (minutes)'],unit='m').apply(lambda x: x.strftime("%H hr  %M min") if x.hour>0 else x.strftime("%M min") )
+    loc_df_sorted.set_index('Name', inplace=True)
+    st.table(loc_df_sorted)
+
     return loc_df.sort_values(by = ['Duration (minutes)'], ascending = [True])
 
 
+def get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data):
+    loc_duration_request = requests.get(f"https://api.mapbox.com/directions/v5/mapbox/{str(mode_of_trans).lower()}/{user_lat_lon[1]},{user_lat_lon[0]};{data['geometry']['coordinates'][0]},{data['geometry']['coordinates'][1]}?access_token={environ['API_TOKEN']}")
+    time_to_loc = (loc_duration_request.json()['routes'][0]['duration'])/60
+    temp_dict = {'Name':data['text'], 'Address':data['place_name'].split(',')[1:2][0],'Duration (minutes)':time_to_loc}
+    loc_df = loc_df.append(temp_dict,ignore_index=True)
+    return loc_df
 
 
     #st.write(map_data)
