@@ -138,7 +138,7 @@ def get_loc_time(map_data,EDtable_df,user_lat_lon,mode_of_trans,typeofloc):
 
 
 def get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data,open_time,close_time,dnow):
-    if dnow.time() > open_time.time() and dnow.time() < close_time.time():
+    if (dnow.time() > open_time.time()) and (dnow.time() < close_time.time()):
         open_close = "Open"
     else:
         open_close = "Closed"
