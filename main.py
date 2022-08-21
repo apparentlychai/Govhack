@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np 
 from geopy.geocoders import Nominatim
 import requests,dotenv,json
-import plotly.graph_objects as go
+#import plotly.graph_objects as go
 from EDtimes import get_ED_times,travel_time,get_loc_time
 from os import environ
 
