@@ -23,13 +23,14 @@ st.title('GOVHACK 2022')
 user_location = st.sidebar.text_input('Add your address Here')
 mode_of_trans = st.sidebar.radio("What is prefered travel option?",['Driving','Cycling','Walking'])
 
-pharmacy =  st.sidebar.radio('Do you want to include pharmacy?',['No','Yes'])
-medical_centre =  st.sidebar.radio('Do you want to include Medical Centre?',['No','Yes'])
+pharmacy =  st.sidebar.radio('Do you want to include pharmacy?',['Yes','No'])
+medical_centre =  st.sidebar.radio('Do you want to include Medical Centre?',['Yes','No'])
 
 
 
 if user_location:
     user_lat_lon, EDtable_df, lat_lon_df =  get_ED_times(page,geolocator, user_location)
+
     EDtable_df_less_preferred = travel_time(user_lat_lon, EDtable_df, lat_lon_df,mode_of_trans)
 
    #st.write(user_lat_lon)

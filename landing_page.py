@@ -14,7 +14,7 @@ st.set_page_config(
     }
 )
 
-st.error("If you are facing a medical emergency, __call 000 now__.", icon="🚨")
+st.error("If you are facing a medical emergency, __call 000 now__.")
 
 st.info("""
 __Do you need someone to talk to?__\n
