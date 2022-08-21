@@ -11,7 +11,7 @@ export interface Address {
 }
 
 /** Example addresses for testing */
-export const addresses: Address[] = [
+const addresses: Address[] = [
   { address: "Testing", lat: 19.123, lon: 20.178 },
   { address: "Apple St", lat: 31.123, lon: -18.178 },
 ];
