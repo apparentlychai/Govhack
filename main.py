@@ -10,6 +10,7 @@ import requests,dotenv,json
 import plotly.graph_objects as go
 from EDtimes import get_ED_times,travel_time,get_loc_time
 from os import environ
+from autocomplete_component import autocomplete_component
 
 dotenv.load_dotenv()
 
@@ -20,6 +21,7 @@ geolocator = Nominatim(user_agent="GovHackathon2022")
 
 st.title('GOVHACK 2022')
 
+geolocated = autocomplete_component("geolocated_address")
 user_location = st.sidebar.text_input('Add your address Here')
 mode_of_trans = st.sidebar.radio("What is prefered travel option?",['Driving','Cycling','Walking'])
 
@@ -28,8 +30,8 @@ medical_centre =  st.sidebar.radio('Do you want to include Medical Centre?',['No
 
 
 
-if user_location:
-    user_lat_lon, EDtable_df, lat_lon_df =  get_ED_times(page,geolocator, user_location)
+if user_location or geolocated:
+    user_lat_lon, EDtable_df, lat_lon_df = get_ED_times(page,geolocator, user_location, geolocated=geolocated)
     EDtable_df_less_preferred = travel_time(user_lat_lon, EDtable_df, lat_lon_df,mode_of_trans)
 
    #st.write(user_lat_lon)
@@ -45,10 +47,3 @@ if user_location:
         loc_dur_df = get_loc_time(map_data, EDtable_df, user_lat_lon,mode_of_trans,'Medical Centre')
         
    #st.write(map_data)
-   
-
-   
-
-
-
-

@@ -12,12 +12,16 @@ from os import environ
 dotenv.load_dotenv()
 pd.options.display.float_format = "{:,.2f}".format
 
-dict_lat_lon = {'lat':[], 'lon':[]}
+dict_lat_lon = {'lat': [], 'lon': []}
 
-def get_ED_times(page,geolocator,user_location):
+def get_ED_times(page,geolocator,user_location,geolocated=None):
 
     soup = get_page_Parsed(page)
-    user_lat_lon = get_User_lan_lon(user_location,geolocator)
+    if geolocated:
+        user_lat_lon = (geolocated["lat"], geolocated["lon"])
+    else:
+        user_lat_lon = get_User_lan_lon(user_location,geolocator)
+    print(user_lat_lon)
     EDtable_df = get_ED_time_df(soup)
     
 
