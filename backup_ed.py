@@ -8,13 +8,14 @@ import numpy as np
 from geopy import distance
 import dotenv,json,requests
 from os import environ
-import random
-from datetime import datetime
+
 
 dotenv.load_dotenv()
 pd.options.display.float_format = "{:,.2f}".format
 
 dict_lat_lon = {'lat':[], 'lon':[]}
+
+
 
 def get_ED_times(page,geolocator,user_location):
 
@@ -40,7 +41,6 @@ def get_ED_times(page,geolocator,user_location):
         
     lat_lon_df = pd.DataFrame(dict_lat_lon,columns = ['lat','lon'])
     EDtable_df['Distance from user'] = distance_from_user
-
    # st.write(EDtable_df)
     
 
@@ -98,25 +98,15 @@ def get_User_lan_lon(user_location,geolocator):
 
 def get_loc_time(map_data,EDtable_df,user_lat_lon,mode_of_trans,typeofloc):
    # not_includede_lst = ['radiology','maternity'] # Need to fix this
-    loc_df = pd.DataFrame(columns=['Name','Address','Duration (minutes)','open-time','open-closed'])
-    lst_open_time = ["09:00","12:00","8:00"]
-    closing_time = {"09:00":["17:00","21:00"],"12:00":["23:59"],"8:00":["17:00","21:00"]}
-    dnow= datetime.now()
+    loc_df = pd.DataFrame(columns=['Name','Address','Duration (minutes)'])
 
     for i,data in enumerate( map_data['features']):
-        op_time_string = random.choice(lst_open_time)
-        close_time_string = random.choice(closing_time[op_time_string])
-
-        open_time = datetime.strptime(op_time_string,'%H:%M')
-        close_time = datetime.strptime(close_time_string,'%H:%M')
         
-        #st.write(f"{t_string}")
         if typeofloc == 'Medical Centre':
             if  'radiology' not in data['text'].lower(): 
-                
-                loc_df = get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data,open_time,close_time,dnow)
+                loc_df = get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data)
         else:
-            loc_df = get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data,open_time,close_time,dnow)
+            loc_df = get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data)
 
 
     
@@ -129,16 +119,11 @@ def get_loc_time(map_data,EDtable_df,user_lat_lon,mode_of_trans,typeofloc):
     return loc_df.sort_values(by = ['Duration (minutes)'], ascending = [True])
 
 
-def get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data,open_time,close_time,dnow):
-    if dnow.time() > open_time.time() and dnow.time() < close_time.time():
-        open_close = "Open"
-    else:
-        open_close = "Closed"
+def get_location_df(map_data,user_lat_lon,mode_of_trans,loc_df,data):
     loc_duration_request = requests.get(f"https://api.mapbox.com/directions/v5/mapbox/{str(mode_of_trans).lower()}/{user_lat_lon[1]},{user_lat_lon[0]};{data['geometry']['coordinates'][0]},{data['geometry']['coordinates'][1]}?access_token={environ['API_TOKEN']}")
     time_to_loc = (loc_duration_request.json()['routes'][0]['duration'])/60
-    temp_dict = {'Name':data['text'], 'Address':data['place_name'].split(',')[1:2][0],'Duration (minutes)':time_to_loc,'open-time':f"{open_time.strftime('%H : %M')} - {close_time.strftime('%H : %M')}","open-closed":open_close}
+    temp_dict = {'Name':data['text'], 'Address':data['place_name'].split(',')[1:2][0],'Duration (minutes)':time_to_loc}
     loc_df = loc_df.append(temp_dict,ignore_index=True)
-
     return loc_df
 
 
