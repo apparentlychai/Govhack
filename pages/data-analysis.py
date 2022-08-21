@@ -1,9 +1,10 @@
+import os
 import streamlit as st
 import pandas as pd
 import altair as alt
 
 # Change this to the path where you store the data
-DATA_PATH = "E:/Learning/Self-Driven/Programming/Hackathon/2022-GovHack/Govhack/data"
+DATA_PATH = os.path.abspath("data")
 # DATA_FILE = "NTGovt_ED_presentation_rate_per_capita_2018-19.csv"
 
 # There are two functions here, there should only be one. I hate this, but it works...
