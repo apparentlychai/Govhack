@@ -8,22 +8,28 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Get help': 'https://www.beyondblue.org.au/',
-        'Report a bug': "https://www.govhack.org",
-        'About': "# In Sight, In Mind"
-    }
+        "Get help": "https://www.beyondblue.org.au/",
+        "Report a bug": "https://www.govhack.org",
+        "About": "# In Sight, In Mind",
+    },
 )
 
 st.error("If you are facing a medical emergency, __call 000 now__.")
 
-st.info("""
+st.info(
+    """
 __Do you need someone to talk to?__\n
 At anytime, you can call Lifeline on _13 11 14_ or BeyondBlue on _1300 22 4636_.
-""", icon="🌟")
 
-st.markdown("""
-## Welcome to **In Sight, In Mind** ![](https://img.icons8.com/bubbles/100/hospital.png)
-This app will help you find the nearest ED or alternatives.
+If you need to talk to someone regarding a mental health issue or other crisis, you can find our full list of support services below.
+""",
+    icon="🌟",
+)
+
+st.markdown(
+    """
+## ![](https://i.imgur.com/SE9cVkQ.png)
+This app will helps you identify your options for hospitals including average waiting times and other medical services including after hours GPs, pharmacy services and other services.
 
 ### How It Works
 1. In the next page, you will be able to provide your location or enter an address.
@@ -31,13 +37,14 @@ This app will help you find the nearest ED or alternatives.
 """
 )
 
-next = st.button("Find an ED")
+st.markdown("**To proceed, click through on the sidebar**")
 
-
-st.markdown("""
+st.markdown(
+    """
 ---
 ### Support Services ![](https://img.icons8.com/clouds/1x/hospital.png)
-""")
+"""
+)
 
 
 regions = list(HELPLINES.keys())
@@ -46,8 +53,10 @@ for i, tab in enumerate(st.tabs(regions)):
         region = regions[i]
         st.header(f"{region}")
         for service, info in HELPLINES[region].items():
-            st.markdown(f"""
+            st.markdown(
+                f"""
             **{service}**  
             Main areas: {", ".join(info["purpose"]).title()}  
             Contact: {info['contact_number']}
-            """)
+            """
+            )
