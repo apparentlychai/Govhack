@@ -11,6 +11,7 @@ import plotly.graph_objects as go
 from EDtimes import get_ED_times,travel_time,get_loc_time
 from os import environ
 from autocomplete_component import autocomplete_component
+from get_location import get_user_lan_lon
 
 dotenv.load_dotenv()
 
@@ -28,14 +29,17 @@ mode_of_trans = st.sidebar.radio("What is prefered travel option?",['Driving','C
 pharmacy =  st.sidebar.radio('Do you want to include pharmacy?',['No','Yes'])
 medical_centre =  st.sidebar.radio('Do you want to include Medical Centre?',['No','Yes'])
 
+# first derive user lat/lon
+user_lat_lon = None
+if isinstance(geolocator, dict) and geolocator["lat"]:
+    user_lat_lon = user_lat_lon = (geolocated["lat"], geolocated["lon"])
+elif user_location:
+    user_lat_lon = get_user_lan_lon(user_location,geolocator)
 
-
-if user_location or geolocated:
-    user_lat_lon, EDtable_df, lat_lon_df = get_ED_times(page,geolocator, user_location, geolocated=geolocated)
+if user_lat_lon:
+    user_lat_lon, EDtable_df, lat_lon_df = get_ED_times(page,geolocator, user_lat_lon)
     EDtable_df_less_preferred = travel_time(user_lat_lon, EDtable_df, lat_lon_df,mode_of_trans)
 
-   #st.write(user_lat_lon)
-    
     if pharmacy == 'Yes':
         r = requests.get(f"https://api.mapbox.com/geocoding/v5/mapbox.places/pharmacy.json?type=poi&proximity={user_lat_lon[1]},{user_lat_lon[0]}&access_token={environ['API_TOKEN']}")
         map_data = r.json()
@@ -45,5 +49,3 @@ if user_location or geolocated:
         r = requests.get(f"https://api.mapbox.com/geocoding/v5/mapbox.places/medical+centre.json?type=poi&proximity={user_lat_lon[1]},{user_lat_lon[0]}&access_token={environ['API_TOKEN']}")
         map_data = r.json()
         loc_dur_df = get_loc_time(map_data, EDtable_df, user_lat_lon,mode_of_trans,'Medical Centre')
-        
-   #st.write(map_data)

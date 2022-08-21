@@ -5,7 +5,6 @@ import { Streamlit, withStreamlitConnection } from "streamlit-component-lib";
 
 const GetLocation = () => {
 
-
     const defaultState = { lat: null, lon: null }
     const [value, setValue] = useState(defaultState);
 

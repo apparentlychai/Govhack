@@ -14,14 +14,8 @@ pd.options.display.float_format = "{:,.2f}".format
 
 dict_lat_lon = {'lat': [], 'lon': []}
 
-def get_ED_times(page,geolocator,user_location,geolocated=None):
-
+def get_ED_times(page,geolocator,user_lat_lon: tuple[float, float]):
     soup = get_page_Parsed(page)
-    if geolocated:
-        user_lat_lon = (geolocated["lat"], geolocated["lon"])
-    else:
-        user_lat_lon = get_User_lan_lon(user_location,geolocator)
-    print(user_lat_lon)
     EDtable_df = get_ED_time_df(soup)
     
 
@@ -79,10 +73,6 @@ def get_page_Parsed(page):
     soup = BeautifulSoup(page.content, "html.parser")
     return soup
 
-def get_User_lan_lon(user_location,geolocator):
-    user_location_geocode = geolocator.geocode(user_location) # Add user location here
-    user_lat_lon = (user_location_geocode.latitude, user_location_geocode.longitude)
-    return user_lat_lon
 
 def get_loc_time(map_data,EDtable_df,user_lat_lon,mode_of_trans,typeofloc):
     loc_df = pd.DataFrame(columns=['Name','Address','Duration (minutes)'])
