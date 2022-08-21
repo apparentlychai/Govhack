@@ -1,0 +1,11 @@
+state,patient_cohort,median_wait_time
+Australia,1. Resuscitation,0
+Australia,2. Emergency,7
+Australia,3. Urgent,21
+Australia,4. Semi-Urgent,27
+Australia,5. Non-Urgent,16
+Northern Territory,1. Resuscitation,0
+Northern Territory,2. Emergency,7
+Northern Territory,3. Urgent,28
+Northern Territory,4. Semi-Urgent,44
+Northern Territory,5. Non-Urgent,27
