@@ -211,6 +211,9 @@ st.altair_chart(
     ontime_chart.interactive(),
     use_container_width=True
 )
+st.write("Source: Australian Institute of Health and Welfare -- "
+"[Emergency Department Care Activity](https://www.aihw.gov.au/reports-data/myhospitals/sectors/emergency-department-care)")
+
 
 ### Part 3 : ED Presentation Departure Within 4hr Rate
 st.markdown("""
@@ -248,6 +251,8 @@ st.altair_chart(
     within4hr_chart.interactive(),
     use_container_width=True
 )
+st.write("Source: Australian Institute of Health and Welfare -- "
+"[Emergency Department Care Activity](https://www.aihw.gov.au/reports-data/myhospitals/sectors/emergency-department-care)")
 
 #### Part 4: Median Wait Time
 # Data sourced from https://www.aihw.gov.au/reports-data/myhospitals/hospital/h0737 (under wait time 2020-21)
@@ -267,3 +272,8 @@ st.altair_chart(
     waittime_chart.interactive(),
     use_container_width=True
 )
+
+st.write("Source: Australian Institute of Health and Welfare -- "
+"[Waiting time for Emergency Presentation by Triage Category by State for 2020-21](https://www.aihw.gov.au/reports-data/myhospitals/hospital/h0737) "
+"Under 'Waiting time in emergency departments' tab.")
+
